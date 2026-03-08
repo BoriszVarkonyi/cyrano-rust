@@ -44,6 +44,74 @@ struct Message {
     left_p_card: String,       // L12 LP-card
 }
 
+impl Default for Message {
+    fn default() -> Self {
+        Self {
+            protocol: "0".to_string(),
+            command: "0".to_string(),
+            piste: "0".to_string(),
+            competition: "0".to_string(),
+            phase: "0".to_string(),
+            pool_tab: "0".to_string(),
+            match_number: "0".to_string(),
+            round: "0".to_string(),
+            time: "0".to_string(),
+            stopwatch: "0".to_string(),
+            competition_type: "0".to_string(),
+            weapon: "0".to_string(),
+            priority: "0".to_string(),
+            state: "0".to_string(),
+            referee_id: "0".to_string(),
+            referee_name: "0".to_string(),
+            referee_nation: "0".to_string(),
+            right_id: "0".to_string(),
+            right_name: "0".to_string(),
+            right_nation: "0".to_string(),
+            right_score: "0".to_string(),
+            right_status: "0".to_string(),
+            right_yellow_cards: "0".to_string(),
+            right_red_cards: "0".to_string(),
+            right_light: "0".to_string(),
+            right_white_light: "0".to_string(),
+            right_medical: "0".to_string(),
+            right_reserve: "0".to_string(),
+            right_p_card: "0".to_string(),
+            left_id: "0".to_string(),
+            left_name: "0".to_string(),
+            left_nation: "0".to_string(),
+            left_score: "0".to_string(),
+            left_status: "0".to_string(),
+            left_yellow_cards: "0".to_string(),
+            left_red_cards: "0".to_string(),
+            left_light: "0".to_string(),
+            left_white_light: "0".to_string(),
+            left_medical: "0".to_string(),
+            left_reserve: "0".to_string(),
+            left_p_card: "0".to_string(),
+        }
+    }
+}
+
+impl Message {
+    fn new(
+        command: impl Into<String>,
+        piste: impl Into<String>,
+        competition: impl Into<String>,
+    ) -> Self {
+        Self {
+            protocol: "EFP1.1".to_string(),
+            command: command.into(),
+            piste: piste.into(),
+            competition: competition.into(),
+            ..Default::default()
+        }
+    }
+
+    fn display(piste: impl Into<String>, competition: impl Into<String>) -> Self {
+        Self::new("DISP", piste, competition)
+    }
+}
+
 fn decompose_msg(mut raw: &str) -> Result<Message, String> {
 
     const GENERAL_LEN : usize = 17;
@@ -175,71 +243,111 @@ fn decompose_msg(mut raw: &str) -> Result<Message, String> {
     Ok(msg)
 }
 
-fn send_hello(
-    ip_address: String,
-    port: String,
+fn compose_hello(
     piste_number: String,
     competition_id: String,
-) -> io::Result<()> {
+) -> String{
 //|EFP1.1|HELLO|17|fm-eq|%| - example HELLO message
-{
-let addr = "0.0.0.0:0";
-let socket = UdpSocket::bind(addr)?;
 
 
 let msg: String = format!("|EFP1.1|HELLO|{}|{}|%|", piste_number, competition_id);
-let buf = msg.as_bytes();
 
-println!("{:?}", buf);
-
-
-let recv_addr: String = format!("{}:{}", ip_address, port);
-
-socket
-    .send_to(buf, &recv_addr)
-    .map_err(|e| io::Error::new(e.kind(), format!("send_to({recv_addr}) failed: {e}")))?;
+msg
 
 }
-Ok(())
-}
 
-fn recv_msg(){
+fn compose_display(msg: Message) -> String{
+    //example display - |EFP1.1|DISP|8|fm-eq|2|B64| … |%|28|P. Martin|FRA||U|…|%|32| B. Panini|ITA||U|…|%|
+
+let general = [
+        msg.protocol.as_str(),
+        msg.command.as_str(), // use command from Message
+        msg.piste.as_str(),
+        msg.competition.as_str(),
+        msg.phase.as_str(),
+        msg.pool_tab.as_str(),
+        msg.match_number.as_str(),
+        msg.round.as_str(),
+        msg.time.as_str(),
+        msg.stopwatch.as_str(),
+        msg.competition_type.as_str(),
+        msg.weapon.as_str(),
+        msg.priority.as_str(),
+        msg.state.as_str(),
+        msg.referee_id.as_str(),
+        msg.referee_name.as_str(),
+        msg.referee_nation.as_str(),
+    ];
+
+    let right = [
+        msg.right_id.as_str(),
+        msg.right_name.as_str(),
+        msg.right_nation.as_str(),
+        msg.right_score.as_str(),
+        msg.right_status.as_str(),
+        msg.right_yellow_cards.as_str(),
+        msg.right_red_cards.as_str(),
+        msg.right_light.as_str(),
+        msg.right_white_light.as_str(),
+        msg.right_medical.as_str(),
+        msg.right_reserve.as_str(),
+        msg.right_p_card.as_str(),
+    ];
+
+    let left = [
+        msg.left_id.as_str(),
+        msg.left_name.as_str(),
+        msg.left_nation.as_str(),
+        msg.left_score.as_str(),
+        msg.left_status.as_str(),
+        msg.left_yellow_cards.as_str(),
+        msg.left_red_cards.as_str(),
+        msg.left_light.as_str(),
+        msg.left_white_light.as_str(),
+        msg.left_medical.as_str(),
+        msg.left_reserve.as_str(),
+        msg.left_p_card.as_str(),
+    ];
+
+    format!("|{}|%|{}|%|{}|%|", general.join("|"), right.join("|"), left.join("|"))
     
+
 }
 
-fn main() /*-> std::io::Result<()>*/{
-    /*{
-         let mut addr = "127.0.0.1:50100";
+fn send_message(ip_address: String, port: String, buffer: String) -> io::Result<()>{
+    {
+        let addr = "0.0.0.0:0";
         let socket = UdpSocket::bind(addr)?;
-        let mut buf = [0;210];
-        let (amt, src) = socket.recv_from(&mut buf)?;
 
-        println!("Number of received bytes: {}", amt);
+        let recv_addr: String = format!("{}:{}", ip_address, port);
 
-        let buf = &mut buf[..amt];
+        let buf = buffer.as_bytes();
 
-        println!("Raw bytes: {:?}", buf);
-
-        let msg = String::from_utf8_lossy(buf);
-
-        println!("as text: {}", msg);
-
-        println!("number of characters: {}", msg.len());
-
-        let my_obj = decompose_msg(&msg);
-
-        println!("{:?}", my_obj);
-
-        buf.reverse();
-
-        addr = "127.0.0.1:50101";
-
-        socket.send_to(buf, addr)?;
-
+        socket
+            .send_to(buf, &recv_addr)
+            .map_err(|e| io::Error::new(e.kind(), format!("send_to({recv_addr}) failed: {e}")))?;
     }
-    Ok(())*/
+    Ok(())
+}
 
-    match send_hello("192.168.1.103".to_string(), "50100".to_string(), "1".to_string(), "fj-emq".to_string()) {
+fn main(){
+
+    //Example message initiation
+    let msg = Message {
+        left_id: "2".to_string(),
+        left_name: "Valaki".to_string(),
+        right_id: "1".to_string(),
+        right_name: "Masik".to_string(),
+        ..Message::new("DISP", "8", "fjm-eq")
+    };
+
+    let to_send = compose_display(msg);
+
+    println!("{}",to_send);
+
+    let example_hello = compose_hello("1".to_string(), "fjm-eq".to_string()); 
+
+    match send_message("192.168.1.103".to_string(), "50100".to_string(), example_hello) {
         Ok(v) => {println!("{:?}", v)}
         Err(e) => eprintln!("failed: {e}"),
     }
