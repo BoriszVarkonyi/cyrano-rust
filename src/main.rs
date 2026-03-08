@@ -1,4 +1,7 @@
 use std::{io, net::UdpSocket};
+use std::thread::spawn;
+use std::thread::JoinHandle;
+
 #[derive(Debug)]
 struct Message {
     protocol: String,          // Protocol
@@ -314,11 +317,8 @@ let general = [
 
 }
 
-fn send_message(ip_address: String, port: String, buffer: String) -> io::Result<()>{
+fn send_message(socket: &UdpSocket,ip_address: String, port: String, buffer: String) -> io::Result<()>{
     {
-        let addr = "0.0.0.0:0";
-        let socket = UdpSocket::bind(addr)?;
-
         let recv_addr: String = format!("{}:{}", ip_address, port);
 
         let buf = buffer.as_bytes();
@@ -330,7 +330,33 @@ fn send_message(ip_address: String, port: String, buffer: String) -> io::Result<
     Ok(())
 }
 
-fn main(){
+fn start_listener(socket: UdpSocket) -> JoinHandle<()> {
+    spawn(move || {
+        let mut buf = [0u8; 2048];
+
+        loop {
+            match socket.recv_from(&mut buf) {
+                Ok((size, src)) => {
+                    let msg = String::from_utf8_lossy(&buf[..size]);
+                    println!("[RECV from {}] {}", src, msg);
+                }
+                Err(e) => {
+                    eprintln!("recv_from error: {}", e);
+                    break;
+                }
+            }
+        }
+    })
+}
+
+fn main() -> io::Result<()> {
+{
+
+    //UDP socket creation
+    let socket = UdpSocket::bind("0.0.0.0:50200")?;
+
+    let listener_socket = socket.try_clone()?;
+    let _listener = start_listener(listener_socket);
 
     //Example message initiation
     let msg = Message {
@@ -338,17 +364,24 @@ fn main(){
         left_name: "Valaki".to_string(),
         right_id: "1".to_string(),
         right_name: "Masik".to_string(),
-        ..Message::new("DISP", "8", "fjm-eq")
+        ..Message::new("DISP", "1", "fjm-eq")
     };
 
     let to_send = compose_display(msg);
 
-    println!("{}",to_send);
-
     let example_hello = compose_hello("1".to_string(), "fjm-eq".to_string()); 
 
-    match send_message("192.168.1.103".to_string(), "50100".to_string(), example_hello) {
+    match send_message(&socket,"192.168.1.103".to_string(), "50100".to_string(), example_hello) {
         Ok(v) => {println!("{:?}", v)}
         Err(e) => eprintln!("failed: {e}"),
     }
+    //println!("{}", to_send);
+    //let _ = send_message("192.168.1.103".to_string(), "50100".to_string(), to_send);
+}
+
+//Keep main alive so the listener thread is alive.
+loop {
+    std::thread::park();
+}
+Ok(())
 }
