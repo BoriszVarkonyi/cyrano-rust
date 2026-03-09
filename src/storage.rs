@@ -10,7 +10,7 @@ pub fn read_pistes() -> Result<Vec<Piste>, Box<dyn std::error::Error>>{
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
 
-    let mut pistes: Vec<Piste> = serde_json::from_str(&contents)?;
+    let pistes: Vec<Piste> = serde_json::from_str(&contents)?;
 
     println!("{:?}", pistes);
 

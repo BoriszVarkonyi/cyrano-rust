@@ -2,20 +2,21 @@ use std::thread::JoinHandle;
 use std::thread::spawn;
 use std::{io, net::UdpSocket};
 
+//own imports
+use crate::com::handle_message;
+
 pub fn send_message(
     socket: &UdpSocket,
-    ip_address: String,
-    port: String,
+    ip_address_port: String,
     buffer: String,
 ) -> io::Result<()> {
     {
-        let recv_addr: String = format!("{}:{}", ip_address, port);
 
         let buf = buffer.as_bytes();
 
         socket
-            .send_to(buf, &recv_addr)
-            .map_err(|e| io::Error::new(e.kind(), format!("send_to({recv_addr}) failed: {e}")))?;
+            .send_to(buf, &ip_address_port)
+            .map_err(|e| io::Error::new(e.kind(), format!("send_to({ip_address_port}) failed: {e}")))?;
     }
     Ok(())
 }
@@ -29,6 +30,7 @@ pub fn start_listener(socket: UdpSocket) -> JoinHandle<()> {
                 Ok((size, src)) => {
                     let msg = String::from_utf8_lossy(&buf[..size]);
                     println!("[RECV from {}] {}", src, msg);
+                    let _ = handle_message(msg.to_string(), &socket, src.to_string());
                 }
                 Err(e) => {
                     eprintln!("recv_from error: {}", e);

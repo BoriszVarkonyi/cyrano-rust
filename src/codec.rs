@@ -9,9 +9,6 @@ pub fn decompose_msg(mut raw: &str) -> Result<Message, String> {
 
     let mut sections: Vec<&str> = raw.split('%').collect();
 
-    println!("Section general: {}", sections[0].to_string());
-    println!("Section Rfencer: {}", sections[1].to_string());
-    println!("Section Lfencer: {}", sections[2].to_string());
 
     let mut general: Vec<&str> = sections[0]
         .trim_matches('|')
@@ -21,6 +18,23 @@ pub fn decompose_msg(mut raw: &str) -> Result<Message, String> {
 
     println!("General data - {:?}", general);
     println!("General data length - {}", general.len());
+
+    if general[1] == "NEXT" {
+
+        let response = Message::new("NEXT", general[2], "fjm-eq");
+        return Ok(response);
+
+    }
+    if general[1] == "PREV" {
+
+        let response = Message::new("PREV", general[2], "fjm-eq");
+        return Ok(response);
+
+    }
+
+    println!("Section general: {}", sections[0].to_string());
+    println!("Section Rfencer: {}", sections[1].to_string());
+    println!("Section Lfencer: {}", sections[2].to_string());
 
     sections[1] = &sections[1][1..sections[1].len() - 1];
 
