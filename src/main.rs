@@ -2,18 +2,26 @@
 mod message;
 mod codec;
 mod net;
+mod domain;
+mod storage;
 
 //Sys imports
-use std::{io, net::UdpSocket};
+use std::{io, net::UdpSocket, ptr::read};
 
 //Own fn uses
 use message::Message;
 use codec::{compose_display, compose_hello};
 use net::{send_message, start_listener};
+use storage::read_pistes;
 
+use crate::domain::Piste;
 
 fn main() -> io::Result<()> {
     {
+        let p = read_pistes();
+
+        println!("{:?}", p);
+
         //UDP socket creation
         let socket = UdpSocket::bind("0.0.0.0:50200")?;
 
@@ -29,8 +37,6 @@ fn main() -> io::Result<()> {
             ..Message::new("DISP", "1", "fjm-eq")
         };
 
-        let to_send = compose_display(msg);
-
         let example_hello = compose_hello("1".to_string(), "fjm-eq".to_string());
 
         match send_message(
@@ -44,8 +50,6 @@ fn main() -> io::Result<()> {
             }
             Err(e) => eprintln!("failed: {e}"),
         }
-        //println!("{}", to_send);
-        //let _ = send_message("192.168.1.103".to_string(), "50100".to_string(), to_send);
     }
 
     //Keep main alive so the listener thread is alive.
