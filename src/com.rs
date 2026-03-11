@@ -1,6 +1,5 @@
 use std::net::UdpSocket;
 
-use serde::de::value::Error;
 
 use crate::codec::{compose_display, decompose_msg};
 use crate::message::Message;

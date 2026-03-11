@@ -6,6 +6,7 @@ mod domain;
 mod storage;
 mod com;
 mod piste_manager;
+mod frontend;
 
 //Sys imports
 use std::{io, net::UdpSocket};
@@ -15,10 +16,13 @@ use codec::{compose_display, compose_hello};
 use net::{send_message, start_listener};
 use storage::read_pistes;
 
+//UI importok
+use eframe::egui;
+
 use crate::{domain::Piste, piste_manager::PisteManager};
 
-fn main() -> io::Result<()> {
-    {
+fn main() -> eframe::Result<()> {
+    /*{
         let p = read_pistes();
 
         println!("{:?}", p);
@@ -30,11 +34,21 @@ fn main() -> io::Result<()> {
         let _listener = start_listener(listener_socket);
 
         PisteManager::activate(socket.try_clone()?, "fjm-eq".to_string());
-    }
+    } */
+
+    //GUI TESZT
+
+    let options =eframe::NativeOptions::default();
+
+     eframe::run_native(
+        "Counter Example",
+        options,
+        Box::new(|_cc| Ok(Box::new(frontend::MyApp::default()))),
+    )
 
     //Keep main alive so the listener thread is alive.
-    loop {
+    /*loop {
         std::thread::park();
     }
-    Ok(())
+    Ok(())*/
 }

@@ -7,9 +7,11 @@ pub struct Piste {
     pub port : String
 }
 
-#[derive(Debug)]
-pub struct Fencer {
-    pub id : String,
-    pub name : String,
-    pub nation : String,
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Match {
+    pub round : String,
+    pub match_no : String,
+    pub match_order : String,
+    pub fencer_1: String,
+    pub fencer_2: String
 }
