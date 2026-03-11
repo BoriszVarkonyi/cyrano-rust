@@ -9,9 +9,11 @@ pub struct Piste {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Match {
-    pub round : String,
-    pub match_no : String,
+    pub round : i8,
+    pub match_no : i8,
     pub match_order : String,
     pub fencer_1: String,
-    pub fencer_2: String
+    pub fencer_1_score : i8,
+    pub fencer_2: String,
+    pub fencer_2_score: i8
 }

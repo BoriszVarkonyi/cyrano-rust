@@ -7,9 +7,10 @@ mod storage;
 mod com;
 mod piste_manager;
 mod frontend;
+mod logic;
 
 //Sys imports
-use std::{io, net::UdpSocket};
+use std::{env, io, net::UdpSocket};
 
 //Own fn uses
 use codec::{compose_display, compose_hello};
@@ -22,6 +23,22 @@ use eframe::egui;
 use crate::{domain::Piste, piste_manager::PisteManager};
 
 fn main() -> eframe::Result<()> {
+    let args: Vec<String> = env::args().collect();
+    if args.get(1).map(String::as_str) == Some("generate-matches") {
+        match logic::generate_table_with_pistes() {
+            Ok(matches) => {
+                println!(
+                    "Generated {} matches and wrote src/data/matches.json",
+                    matches.len()
+                );
+            }
+            Err(e) => {
+                eprintln!("Failed to generate matches: {e}");
+            }
+        }
+        return Ok(());
+    }
+
     /*{
         let p = read_pistes();
 
